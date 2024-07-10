@@ -57,7 +57,8 @@ contract WildToken is
     }
 
     /**
-     * @dev Mint new tokens for inflation mechanic
+     * @dev mint new tokens for inflation mechanic
+     * @dev inflation is fixed 5% per year max based on initial supply
      * @param to The address of the target account
      * @param amount The number of tokens to be minted
      */
@@ -77,12 +78,12 @@ contract WildToken is
         uint256 currentYear = (block.timestamp - lastMintingTime) / MINIMUM_TIME_BETWEEN_MINTS;
 
         if (currentYear >= 1) {
-            // Reset the yearly minting amount if a year has passed
+            // reset the yearly minting amount if a year has passed
             lastMintingTime = block.timestamp;
             mintedThisYear = 0;
         }
 
-        // Ensure the mint amount does not exceed the yearly cap
+        // ensure the mint amount does not exceed the yearly cap
         if (mintedThisYear + amount > (totalSupply() * MINT_CAP) / 100) {
             revert MintCapExceeded();
         }
@@ -102,20 +103,20 @@ contract WildToken is
     }
 
     /**
-     * @dev Pause all token transfers
+     * @dev pause all token transfers
      */
     function pause() public onlyOwner {
         _pause();
     }
 
     /**
-     * @dev Unpause all token transfers
+     * @dev unpause all token transfers
      */
     function unpause() public onlyOwner {
         _unpause();
     }
 
-    // The following functions are overrides required by Solidity.
+    // the following functions are overrides required by Solidity.
     function _update(
         address from,
         address to,

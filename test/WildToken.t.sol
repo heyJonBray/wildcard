@@ -6,11 +6,11 @@ import "../src/WildToken.sol";
 
 contract WildTokenTest is Test {
     WildToken token;
-    address owner = address(this); // Set the owner to the test contract
+    address owner = address(this); // set the owner to the test contract
     address user = address(2);
 
     function setUp() public {
-        uint256 mintingAllowedAfter = block.timestamp + 365 days; // Set the initial minting allowed time
+        uint256 mintingAllowedAfter = block.timestamp + 365 days; // set the initial minting allowed time
         token = new WildToken(mintingAllowedAfter);
     }
 
@@ -20,29 +20,29 @@ contract WildTokenTest is Test {
     }
 
     function testInflation() public {
-        // Fast forward 1 year
+        // fast forward 1 year
         vm.warp(block.timestamp + 365 days);
 
-        // Mint 4% of the total supply
+        // mint 4% of the total supply
         uint256 mintAmount = (token.totalSupply() * 4) / 100;
         token.mint(owner, mintAmount);
 
         uint256 expectedSupply = 1_000_000_000 * 10 ** token.decimals() + mintAmount;
         assertEq(token.totalSupply(), expectedSupply);
 
-        // Mint another 1% of the total supply
+        // mint another 1% of the total supply
         mintAmount = (token.totalSupply() * 1) / 100;
         token.mint(owner, mintAmount);
 
         expectedSupply += mintAmount;
         assertEq(token.totalSupply(), expectedSupply);
 
-        // Try to mint another 1%, should fail due to cap
+        // try to mint another 1%, should fail due to cap
         mintAmount = (token.totalSupply() * 1) / 100;
         vm.expectRevert(WildToken.MintCapExceeded.selector);
         token.mint(owner, mintAmount);
 
-        // Fast forward another year and ensure minting works again
+        // fast forward another year and ensure minting works again
         vm.warp(block.timestamp + 365 days);
         token.mint(owner, mintAmount);
         expectedSupply += mintAmount;
