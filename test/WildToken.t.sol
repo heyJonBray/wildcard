@@ -6,27 +6,31 @@ import "../src/WildToken.sol";
 
 contract WildTokenTest is Test {
     WildToken token;
-    address owner = address(1);
+    address owner = address(this); // Set the owner to the test contract
     address user = address(2);
 
     function setUp() public {
-        token = new WildToken("Wild Token", "WILD", 1000 ether, owner);
+        uint256 mintingAllowedAfter = block.timestamp + 365 days; // Set the initial minting allowed time
+        token = new WildToken(mintingAllowedAfter);
     }
 
-    function testInitialSupply() public {
-        assertEq(token.totalSupply(), 1000 ether);
-        assertEq(token.balanceOf(owner), 1000 ether);
+    function testInitialSupply() public view {
+        assertEq(token.totalSupply(), 1_000_000_000 * 10 ** token.decimals());
+        assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals());
     }
 
     function testInflation() public {
         // Fast forward 1 year
         vm.warp(block.timestamp + 365 days);
 
+        // Ensure owner has enough tokens to transfer
+        assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals());
+
         // Trigger a token transfer to apply inflation
         vm.prank(owner);
         token.transfer(user, 1 ether);
 
-        uint256 expectedSupply = 1000 ether + (1000 ether * 5) / 100;
+        uint256 expectedSupply = 1_000_000_000 * 10 ** token.decimals() + (1_000_000_000 * 10 ** token.decimals() * 5) / 100;
         assertEq(token.totalSupply(), expectedSupply);
     }
 }

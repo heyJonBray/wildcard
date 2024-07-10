@@ -8,10 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-/**
- * @notice Wildcard token
- * @custom:security-contact jonbray@skiff.com
- */
 contract WildToken is
     ERC20,
     ERC20Burnable,
@@ -20,63 +16,25 @@ contract WildToken is
     ERC20Votes,
     Ownable
 {
-    /**
-     * @dev EIP-20 token name for this token
-     */
+
     string public constant TOKEN_NAME = "Wildcard";
-
-    /**
-     * @dev EIP-20 token symbol for this token
-     */
     string public constant TOKEN_SYMBOL = "WILD";
-
-    /**
-     * @dev Total number of tokens in circulation
-     */
     uint256 public constant TOKEN_INITIAL_SUPPLY = 1_000_000_000;
-
-    /**
-     * @dev Minimum time between mints
-     */
     uint32 public constant MINIMUM_TIME_BETWEEN_MINTS = 1 days * 365;
-
-    /**
-     * @dev Cap on the percentage of totalSupply that can be minted at each mint
-     */
-    uint8 public constant MINT_CAP = 1;
-
-    /**
-     * @dev The timestamp after which minting may occur
-     */
+    uint8 public constant MINT_CAP = 5; // 5% per year inflation
+    
     uint256 public mintingAllowedAfter;
+    uint256 public lastMintingTime;
+    uint256 public mintedThisYear;
 
-    /**
-     * @dev The minting date has not been reached yet
-     */
     error MintingDateNotReached();
-
-    /**
-     * @dev Cannot mint to the zero address
-     */
     error MintToZeroAddressBlocked();
-
-    /**
-     * @dev Minting date must be set to occur after deployment
-     */
     error MintAllowedAfterDeployOnly(
         uint256 blockTimestamp,
         uint256 mintingAllowedAfter
     );
+    error MintCapExceeded();
 
-    /**
-     * @dev Attempted to mint more than the cap allows
-     */
-    error DegenMintCapExceeded();
-
-    /**
-     * @dev Construct a new Degen token
-     * @param mintingAllowedAfter_ The timestamp after which minting may occur
-     */
     constructor(
         uint256 mintingAllowedAfter_
     )
@@ -92,12 +50,13 @@ contract WildToken is
         }
 
         _mint(msg.sender, TOKEN_INITIAL_SUPPLY * 10 ** decimals());
-
         mintingAllowedAfter = mintingAllowedAfter_;
+        lastMintingTime = block.timestamp;
+        mintedThisYear = 0;
     }
 
     /**
-     * @dev Mint new tokens
+     * @dev Mint new tokens for inflation mechanic
      * @param to The address of the target account
      * @param amount The number of tokens to be minted
      */
@@ -110,12 +69,15 @@ contract WildToken is
             revert MintToZeroAddressBlocked();
         }
 
+        uint256 currentYear = (block.timestamp - lastMintingTime) / MINIMUM_TIME_BETWEEN_MINTS;
+
         // record the mint
         mintingAllowedAfter = block.timestamp + MINIMUM_TIME_BETWEEN_MINTS;
 
         // mint the amount
         if (amount > (totalSupply() * MINT_CAP) / 100) {
-            revert DegenMintCapExceeded();
+            revert MintCapExceeded
+      ();
         }
 
         _mint(to, amount);

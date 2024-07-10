@@ -12,13 +12,9 @@ contract WildTokenScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        // Change the parameters as needed
-        string memory name = "Wildcard Token";
-        string memory symbol = "WILD";
-        uint256 initialSupply = 1000 ether;
-        address owner = msg.sender;
+        uint256 mintingAllowedAfter = block.timestamp + 365 days; // Set the initial minting allowed time
 
-        wildToken = new WildToken(name, symbol, initialSupply, owner);
+        wildToken = new WildToken(mintingAllowedAfter);
 
         console.log("WildToken deployed to:", address(wildToken));
 
