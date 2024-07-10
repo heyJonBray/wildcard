@@ -29,6 +29,7 @@ contract WildToken is
 
     error MintingDateNotReached();
     error MintToZeroAddressBlocked();
+    error MintToContractAddressBlocked();
     error MintAllowedAfterDeployOnly(
         uint256 blockTimestamp,
         uint256 mintingAllowedAfter
@@ -67,6 +68,10 @@ contract WildToken is
 
         if (to == address(0)) {
             revert MintToZeroAddressBlocked();
+        }
+        // prevent minting to contract address
+        if (to == address(this)) {
+            revert MintToContractAddressBlocked();
         }
 
         uint256 currentYear = (block.timestamp - lastMintingTime) / MINIMUM_TIME_BETWEEN_MINTS;
