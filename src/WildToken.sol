@@ -87,6 +87,16 @@ contract WildToken is
     }
 
     /**
+     * @dev recover tokens sent to the contract address
+     * @param token the address of the token to recover
+     * @param amount the amount of tokens to recover
+     * @param to the address to send the recovered tokens to
+     */
+    function recoverTokens(address token, uint256 amount, address to) external onlyOwner {
+        IERC20(token).transfer(to, amount);
+    }
+
+    /**
      * @dev Pause all token transfers
      */
     function pause() public onlyOwner {
