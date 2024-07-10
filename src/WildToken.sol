@@ -60,7 +60,7 @@ contract WildToken is
      * @param to The address of the target account
      * @param amount The number of tokens to be minted
      */
-    function mint(address to, uint96 amount) external onlyOwner {
+    function mint(address to, uint256 amount) external onlyOwner {
         if (block.timestamp < mintingAllowedAfter) {
             revert MintingDateNotReached();
         }
@@ -71,15 +71,18 @@ contract WildToken is
 
         uint256 currentYear = (block.timestamp - lastMintingTime) / MINIMUM_TIME_BETWEEN_MINTS;
 
-        // record the mint
-        mintingAllowedAfter = block.timestamp + MINIMUM_TIME_BETWEEN_MINTS;
-
-        // mint the amount
-        if (amount > (totalSupply() * MINT_CAP) / 100) {
-            revert MintCapExceeded
-      ();
+        if (currentYear >= 1) {
+            // Reset the yearly minting amount if a year has passed
+            lastMintingTime = block.timestamp;
+            mintedThisYear = 0;
         }
 
+        // Ensure the mint amount does not exceed the yearly cap
+        if (mintedThisYear + amount > (totalSupply() * MINT_CAP) / 100) {
+            revert MintCapExceeded();
+        }
+
+        mintedThisYear += amount;
         _mint(to, amount);
     }
 

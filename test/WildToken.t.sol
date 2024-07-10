@@ -14,7 +14,7 @@ contract WildTokenTest is Test {
         token = new WildToken(mintingAllowedAfter);
     }
 
-    function testInitialSupply() public view {
+    function testInitialSupply() public {
         assertEq(token.totalSupply(), 1_000_000_000 * 10 ** token.decimals());
         assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals());
     }
@@ -23,14 +23,29 @@ contract WildTokenTest is Test {
         // Fast forward 1 year
         vm.warp(block.timestamp + 365 days);
 
-        // Ensure owner has enough tokens to transfer
-        assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals());
+        // Mint 4% of the total supply
+        uint256 mintAmount = (token.totalSupply() * 4) / 100;
+        token.mint(owner, mintAmount);
 
-        // Trigger a token transfer to apply inflation
-        vm.prank(owner);
-        token.transfer(user, 1 ether);
+        uint256 expectedSupply = 1_000_000_000 * 10 ** token.decimals() + mintAmount;
+        assertEq(token.totalSupply(), expectedSupply);
 
-        uint256 expectedSupply = 1_000_000_000 * 10 ** token.decimals() + (1_000_000_000 * 10 ** token.decimals() * 5) / 100;
+        // Mint another 1% of the total supply
+        mintAmount = (token.totalSupply() * 1) / 100;
+        token.mint(owner, mintAmount);
+
+        expectedSupply += mintAmount;
+        assertEq(token.totalSupply(), expectedSupply);
+
+        // Try to mint another 1%, should fail due to cap
+        mintAmount = (token.totalSupply() * 1) / 100;
+        vm.expectRevert(WildToken.MintCapExceeded.selector);
+        token.mint(owner, mintAmount);
+
+        // Fast forward another year and ensure minting works again
+        vm.warp(block.timestamp + 365 days);
+        token.mint(owner, mintAmount);
+        expectedSupply += mintAmount;
         assertEq(token.totalSupply(), expectedSupply);
     }
 }
