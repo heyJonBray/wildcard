@@ -16,7 +16,6 @@ contract WildToken is
     ERC20Votes,
     Ownable
 {
-
     string public constant TOKEN_NAME = "Wildcard";
     string public constant TOKEN_SYMBOL = "WILD";
     uint256 public constant TOKEN_INITIAL_SUPPLY = 1_000_000_000;
@@ -29,6 +28,7 @@ contract WildToken is
 
     error MintingDateNotReached();
     error MintToZeroAddressBlocked();
+    error MintToContractAddressBlocked();
     error MintAllowedAfterDeployOnly(
         uint256 blockTimestamp,
         uint256 mintingAllowedAfter
@@ -56,29 +56,36 @@ contract WildToken is
     }
 
     /**
-     * @dev Mint new tokens for inflation mechanic
-     * @param to The address of the target account
-     * @param amount The number of tokens to be minted
+     * @dev mint new tokens for inflation mechanic
+     * @param to the address of the target account
+     * @param amount the number of tokens to be minted
      */
     function mint(address to, uint256 amount) external onlyOwner {
         if (block.timestamp < mintingAllowedAfter) {
             revert MintingDateNotReached();
         }
-
+        // prevent minting to zero address
         if (to == address(0)) {
             revert MintToZeroAddressBlocked();
+        }
+        // prevent minting to contract address
+        if (to == address(this)) {
+            revert MintToContractAddressBlocked();
         }
 
         uint256 currentYear = (block.timestamp - lastMintingTime) / MINIMUM_TIME_BETWEEN_MINTS;
 
         if (currentYear >= 1) {
-            // Reset the yearly minting amount if a year has passed
+            // reset the yearly minting amount if a year has passed
             lastMintingTime = block.timestamp;
             mintedThisYear = 0;
         }
+        
+        // calculate the maximum mintable amount based on the current total supply
+        uint256 maxMintable = (totalSupply() * MINT_CAP) / 100;
 
-        // Ensure the mint amount does not exceed the yearly cap
-        if (mintedThisYear + amount > (totalSupply() * MINT_CAP) / 100) {
+        // ensure the mint amount does not exceed the yearly cap
+        if (mintedThisYear + amount > maxMintable) {
             revert MintCapExceeded();
         }
 
@@ -87,20 +94,30 @@ contract WildToken is
     }
 
     /**
-     * @dev Pause all token transfers
+     * @dev recover tokens sent to the contract address
+     * @param token the address of the token to recover
+     * @param amount the amount of tokens to recover
+     * @param to the address to send the recovered tokens to
+     */
+    function recoverTokens(address token, uint256 amount, address to) external onlyOwner {
+        IERC20(token).transfer(to, amount);
+    }
+
+    /**
+     * @dev pause all token transfers
      */
     function pause() public onlyOwner {
         _pause();
     }
 
     /**
-     * @dev Unpause all token transfers
+     * @dev unpause all token transfers
      */
     function unpause() public onlyOwner {
         _unpause();
     }
 
-    // The following functions are overrides required by Solidity.
+    // the following functions are overrides required by solidity
     function _update(
         address from,
         address to,
