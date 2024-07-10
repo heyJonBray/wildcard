@@ -13,7 +13,6 @@ contract WildTokenScript is Script {
         vm.startBroadcast();
 
         uint256 mintingAllowedAfter = block.timestamp + 365 days; // initialize initial mint date
-        uint256 mintedThisYear = 0; // initialize amount minted this year
 
         wildToken = new WildToken(mintingAllowedAfter);
 
