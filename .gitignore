@@ -2,6 +2,8 @@
 cache/
 out/
 
+lib/
+
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
@@ -12,4 +14,3 @@ docs/
 
 # Dotenv file
 .env
-lib/forge-std
