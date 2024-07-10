@@ -57,6 +57,7 @@ contract WildToken is
 
     /**
      * @dev mint new tokens for inflation mechanic
+     * @dev inflation is compound 5% per year max
      * @param to the address of the target account
      * @param amount the number of tokens to be minted
      */
