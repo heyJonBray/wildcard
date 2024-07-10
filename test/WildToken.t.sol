@@ -48,4 +48,68 @@ contract WildTokenTest is Test {
         expectedSupply += mintAmount;
         assertEq(token.totalSupply(), expectedSupply);
     }
+
+        function testMintToContractAddressBlocked() public {
+        vm.warp(block.timestamp + 365 days);
+        uint256 mintAmount = (token.totalSupply() * 1) / 100;
+
+        // try to mint to the contract address, should fail
+        vm.expectRevert(WildToken.MintToContractAddressBlocked.selector);
+        token.mint(address(token), mintAmount);
+    }
+
+    function testRecoverTokens() public {
+        // fast forward 1 year
+        vm.warp(block.timestamp + 365 days);
+        // mint tokens to owner address
+        uint256 mintAmount = (token.totalSupply() * 1) / 100;
+        token.mint(owner, mintAmount);
+        // transfer tokens from owner to contract address
+        token.transfer(address(token), mintAmount);
+        // recover tokens from the contract address
+        uint256 contractBalanceBefore = token.balanceOf(address(token));
+        emit log_named_uint("Contract balance before recovery", contractBalanceBefore);
+        token.recoverTokens(address(token), mintAmount, owner);
+        uint256 contractBalanceAfter = token.balanceOf(address(token));
+        emit log_named_uint("Contract balance after recovery", contractBalanceAfter);
+        assertEq(contractBalanceAfter, contractBalanceBefore - mintAmount);
+        assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals() + mintAmount);
+        emit log_named_uint("Owner balance after recovery", token.balanceOf(owner));
+    }
+
+    function testTotalSupplyAfterInflation() public {
+        for (uint256 year = 1; year <= 5; year++) {
+            vm.warp(block.timestamp + 365 days);
+
+            uint256 mintAmount = (token.totalSupply() * 5) / 100;
+            token.mint(owner, mintAmount);
+
+            emit log_named_uint(
+                string(abi.encodePacked("Year ", uint2str(year), " - Total Supply")),
+                token.totalSupply()
+            );
+        }
+    }
+
+    function uint2str(uint256 _i) internal pure returns (string memory str) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint256 k = len;
+        while (_i != 0) {
+            k = k - 1;
+            uint8 temp = (48 + uint8(_i - (_i / 10) * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        str = string(bstr);
+    }
 }
