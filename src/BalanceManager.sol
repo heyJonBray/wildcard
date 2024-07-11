@@ -36,7 +36,6 @@ contract BalanceManager is Ownable, ReentrancyGuard {
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
-
     // function to allow owner to add admin role
     function addAdmin(address admin) external onlyOwner {
         admins[admin] = true;
@@ -55,6 +54,11 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         require(token != address(0), "Invalid token address");
 
         uint256 currentBalance = balances[user][token];
+        if (currentBalance == 0 && amount > 0) {
+            walletTokens[user].push(token);
+            tokenWallets[token].push(user);
+        }
+
         if (amount > currentBalance) {
             totalBalances[token] += (amount - currentBalance);
         } else {
@@ -69,6 +73,11 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     function increaseBalance(address user, address token, uint256 amount) external onlyAdmin notContract(user) {
         require(user != address(0), "Invalid user address");
         require(token != address(0), "Invalid token address");
+
+        if (balances[user][token] == 0 && amount > 0) {
+            walletTokens[user].push(token);
+            tokenWallets[token].push(user);
+        }
 
         balances[user][token] += amount;
         totalBalances[token] += amount;
@@ -99,7 +108,7 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         require(token != address(0), "Invalid token address");
         uint256 balance = balances[msg.sender][token];
         require(balance > 0, "No balance available");
-        
+
         balances[msg.sender][token] = 0;
         totalBalances[token] -= balance;
         emit BalanceClaimed(msg.sender, token, balance);
@@ -118,7 +127,7 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         emit TokensWithdrawn(token, amount, to);
     }
 
-    // get the [balance] for (wallet, token)
+    // get balance for a specific (wallet, token) combo
     function getBalance(address wallet, address token) external view returns (uint256) {
         return balances[wallet][token];
     }
