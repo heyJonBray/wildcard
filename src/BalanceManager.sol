@@ -115,4 +115,33 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         IERC20(token).transfer(to, amount);
         emit TokensWithdrawn(token, amount, to);
     }
+
+    // get the [balance] for (wallet, token)
+    function getBalance(address wallet, address token) external view returns (uint256) {
+        return balances[wallet][token];
+    }
+
+    // get all [token, balance] for a specific wallet
+    function getBalancesForWallet(address wallet) external view returns (address[] memory, uint256[] memory) {
+        uint256 length = walletTokens[wallet].length;
+        address[] memory tokens = new address[](length);
+        uint256[] memory balanceValues = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            tokens[i] = walletTokens[wallet][i];
+            balanceValues[i] = balances[wallet][tokens[i]];
+        }
+        return (tokens, balanceValues);
+    }
+
+    // get all [wallet, balance] for a specific token
+    function getBalancesForToken(address token) external view returns (address[] memory, uint256[] memory) {
+        uint256 length = tokenWallets[token].length;
+        address[] memory wallets = new address[](length);
+        uint256[] memory balanceValues = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            wallets[i] = tokenWallets[token][i];
+            balanceValues[i] = balances[wallets[i]][token];
+        }
+        return (wallets, balanceValues);
+    }
 }
