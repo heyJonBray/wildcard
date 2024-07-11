@@ -104,7 +104,7 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     }
 
     // function to allow user to claim balance
-    function claim(address token) external notContract(msg.sender) nonReentrant {
+    function claim(address token) public notContract(msg.sender) nonReentrant {
         require(token != address(0), "Invalid token address");
         uint256 balance = balances[msg.sender][token];
         require(balance > 0, "No balance available");
@@ -113,6 +113,23 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         totalBalances[token] -= balance;
         emit BalanceClaimed(msg.sender, token, balance);
         IERC20(token).transfer(msg.sender, balance);
+    }
+
+    // function to allow user to claim all balances
+    function claimAll() external notContract(msg.sender) nonReentrant {
+        uint256 length = walletTokens[msg.sender].length;
+        require(length > 0, "No balances available to claim");
+
+        for (uint256 i = 0; i < length; i++) {
+            address token = walletTokens[msg.sender][i];
+            uint256 balance = balances[msg.sender][token];
+            if (balance > 0) {
+                balances[msg.sender][token] = 0;
+                totalBalances[token] -= balance;
+                emit BalanceClaimed(msg.sender, token, balance);
+                IERC20(token).transfer(msg.sender, balance);
+            }
+        }
     }
 
     // function to allow owner to withdraw stuck tokens
