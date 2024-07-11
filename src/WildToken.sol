@@ -8,20 +8,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-contract WildToken is
-    ERC20,
-    ERC20Burnable,
-    ERC20Pausable,
-    ERC20Permit,
-    ERC20Votes,
-    Ownable
-{
+/**
+ * @title Wildcard Token
+ * @author [Jon Bray](https://warpcast.com/jonbray.eth)
+ * @notice Initial supply: 1,000,000,000
+ * @notice Inflation: 5% per year
+ */
+contract WildToken is ERC20, ERC20Burnable, ERC20Pausable, ERC20Permit, ERC20Votes, Ownable {
     string public constant TOKEN_NAME = "Wildcard";
     string public constant TOKEN_SYMBOL = "WILD";
     uint256 public constant TOKEN_INITIAL_SUPPLY = 1_000_000_000;
     uint32 public constant MINIMUM_TIME_BETWEEN_MINTS = 1 days * 365;
     uint8 public constant MINT_CAP = 5; // 5% per year inflation
-    
+
     uint256 public mintingAllowedAfter;
     uint256 public lastMintingTime;
     uint256 public mintedThisYear;
@@ -29,24 +28,16 @@ contract WildToken is
     error MintingDateNotReached();
     error MintToZeroAddressBlocked();
     error MintToContractAddressBlocked();
-    error MintAllowedAfterDeployOnly(
-        uint256 blockTimestamp,
-        uint256 mintingAllowedAfter
-    );
+    error MintAllowedAfterDeployOnly(uint256 blockTimestamp, uint256 mintingAllowedAfter);
     error MintCapExceeded();
 
-    constructor(
-        uint256 mintingAllowedAfter_
-    )
+    constructor(uint256 mintingAllowedAfter_)
         ERC20(TOKEN_NAME, TOKEN_SYMBOL)
         ERC20Permit(TOKEN_NAME)
         Ownable(msg.sender)
     {
         if (mintingAllowedAfter_ < block.timestamp) {
-            revert MintAllowedAfterDeployOnly(
-                block.timestamp,
-                mintingAllowedAfter_
-            );
+            revert MintAllowedAfterDeployOnly(block.timestamp, mintingAllowedAfter_);
         }
 
         _mint(msg.sender, TOKEN_INITIAL_SUPPLY * 10 ** decimals());
@@ -81,7 +72,7 @@ contract WildToken is
             lastMintingTime = block.timestamp;
             mintedThisYear = 0;
         }
-        
+
         // calculate the maximum mintable amount based on the current total supply
         uint256 maxMintable = (totalSupply() * MINT_CAP) / 100;
 
@@ -119,17 +110,11 @@ contract WildToken is
     }
 
     // the following functions are overrides required by solidity
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    ) internal override(ERC20, ERC20Pausable, ERC20Votes) {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable, ERC20Votes) {
         super._update(from, to, value);
     }
 
-    function nonces(
-        address owner
-    ) public view override(ERC20Permit, Nonces) returns (uint256) {
+    function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 }
