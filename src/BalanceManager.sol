@@ -32,7 +32,6 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     event Funded(address indexed token, uint256 amount);
     event TokensWithdrawn(address indexed token, uint256 amount, address indexed to);
 
-
     // function to allow owner to add admin role
     function addAdmin(address admin) external onlyOwner {
         admins[admin] = true;
@@ -63,8 +62,8 @@ contract BalanceManager is Ownable, ReentrancyGuard {
 
     // function to allow admin to increase balance
     function increaseBalance(address user, address token, uint256 amount) external onlyAdmin notContract(user) {
-       require(user != address(0), "Invalid user address");
-       require(token != address(0), "Invalid token address");
+        require(user != address(0), "Invalid user address");
+        require(token != address(0), "Invalid token address");
 
         balances[user][token] += amount;
         totalBalances[token] += amount;
@@ -82,7 +81,6 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         emit BalanceReduced(user, token, amount);
     }
 
-
     // function to allow admin to fund contract
     function fund(address token, uint256 amount) external onlyAdmin {
         require(token != address(0), "Invalid token address");
@@ -92,17 +90,16 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     }
 
     // function to allow user to claim balance
-    function claim(address token) external notContract(msg.sender) {
-       require(token != address(0), "Invalid token address");
+    function claim(address token) external notContract(msg.sender) nonReentrant {
+        require(token != address(0), "Invalid token address");
         uint256 balance = balances[msg.sender][token];
-       require(balance > 0, "No balance available");
-       // reset balance before transfer to avoid reentrancy
-       balances[msg.sender][token] = 0;
-       totalBalances[token] -= balance;
-       emit BalanceClaimed(msg.sender, token, balance);
-       IERC20(token).transfer(msg.sender, balance);
-}
-
+        require(balance > 0, "No balance available");
+        
+        balances[msg.sender][token] = 0;
+        totalBalances[token] -= balance;
+        emit BalanceClaimed(msg.sender, token, balance);
+        IERC20(token).transfer(msg.sender, balance);
+    }
 
     // function to allow owner to withdraw stuck tokens
     function withdrawExcessTokens(address token, uint256 amount, address to) external onlyOwner {
@@ -115,5 +112,4 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         IERC20(token).transfer(to, amount);
         emit TokensWithdrawn(token, amount, to);
     }
-
 }
