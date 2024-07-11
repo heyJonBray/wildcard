@@ -5,6 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+/**
+ * @title Balance Manager
+ * @author [Jon Bray](https://warpcast.com/jonbray.eth)
+ * @notice Only admin can update user balance mappings.
+ * @notice Users can claim their balance of any token at any time.
+ */
 contract BalanceManager is Ownable, ReentrancyGuard {
     mapping(address => bool) public admins;
     mapping(address => mapping(address => uint256)) public balances;
@@ -14,19 +20,6 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     address[] public allTokens;
     address[] public allAdmins;
 
-    modifier onlyAdmin() {
-        require(admins[msg.sender], "Caller is not an admin");
-        _;
-    }
-
-    /**
-     * @dev modifier to ensure the contract itself cannot be a user
-     */
-    modifier notContract(address user) {
-        require(user != address(this), "Contract cannot be the user");
-        _;
-    }
-
     event AdminAdded(address indexed admin);
     event AdminRemoved(address indexed admin);
     event BalanceSet(address indexed user, address indexed token, uint256 balance);
@@ -35,6 +28,16 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     event BalanceClaimed(address indexed user, address indexed token, uint256 amount);
     event Funded(address indexed token, uint256 amount);
     event TokensWithdrawn(address indexed token, uint256 amount, address indexed to);
+
+    modifier onlyAdmin() {
+        require(admins[msg.sender], "Caller is not an admin");
+        _;
+    }
+
+    modifier notContract(address user) {
+        require(user != address(this), "Contract cannot be the user");
+        _;
+    }
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
@@ -173,7 +176,6 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     /**
      * Getter Methods
      */
-
     function getAllAdmins() external view returns (address[] memory) {
         return allAdmins;
     }
