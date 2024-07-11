@@ -199,6 +199,53 @@ contract BalanceManagerTest is Test {
         vm.stopPrank();
     }
 
+    function testFuzzSetBalance(uint256 amount) public {
+        vm.assume(amount <= hundredThousand);
+        vm.startPrank(admin1);
+
+        console.log("Setting balance for user1 to", amount);
+        balanceManager.setBalance(user1, address(mockTokenA), amount);
+
+        uint256 balance = balanceManager.getBalance(user1, address(mockTokenA));
+        console.log("Balance for user1 after setting:", balance);
+
+        assertEq(balance, amount, "Balance should match the set amount");
+        vm.stopPrank();
+    }
+
+    function testFuzzIncreaseBalance(uint256 amount) public {
+        vm.assume(amount <= hundredThousand);
+        vm.startPrank(admin1);
+
+        console.log("Increasing balance for user1 by", amount);
+        balanceManager.increaseBalance(user1, address(mockTokenA), amount);
+
+        uint256 balance = balanceManager.getBalance(user1, address(mockTokenA));
+        console.log("Balance for user1 after increase:", balance);
+
+        assertEq(balance, amount, "Balance should match the increased amount");
+        vm.stopPrank();
+    }
+
+    function testFuzzReduceBalance(uint256 initialAmount, uint256 reduceAmount) public {
+        vm.assume(initialAmount <= hundredThousand);
+        vm.assume(reduceAmount <= initialAmount);
+
+        vm.startPrank(admin1);
+
+        console.log("Setting initial balance for user1 to", initialAmount);
+        balanceManager.setBalance(user1, address(mockTokenA), initialAmount);
+
+        console.log("Reducing balance for user1 by", reduceAmount);
+        balanceManager.reduceBalance(user1, address(mockTokenA), reduceAmount);
+
+        uint256 balance = balanceManager.getBalance(user1, address(mockTokenA));
+        console.log("Balance for user1 after reduction:", balance);
+
+        assertEq(balance, initialAmount - reduceAmount, "Balance should match the reduced amount");
+        vm.stopPrank();
+    }
+
     function testClaimBalance() public {
         vm.startPrank(admin1);
 
