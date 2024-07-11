@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
  * @title Wildcard Token
  * @author [Jon Bray](https://warpcast.com/jonbray.eth)
  * @notice Initial supply: 1,000,000,000
- * @notice Inflation: 5% per year
+ * @notice Inflation: 5% of total supply per year
  */
 contract WildToken is ERC20, ERC20Burnable, ERC20Pausable, ERC20Permit, ERC20Votes, Ownable {
     string public constant TOKEN_NAME = "Wildcard";
