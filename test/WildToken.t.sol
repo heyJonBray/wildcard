@@ -28,7 +28,7 @@ contract WildTokenTest is Test {
         console.log("Setup completed. Owner address:", owner, "User address:", user);
     }
 
-    function testInitialSupply() public view {
+    function testInitialSupply() public {
         uint256 initialSupply = 1_000_000_000 * 10 ** token.decimals();
         console.log("Testing Initial Supply");
         console.log("Expected initial supply:", initialSupply);
@@ -261,5 +261,21 @@ contract WildTokenTest is Test {
             abi.encodeWithSelector(WildToken.MintAllowedAfterDeployOnly.selector, block.timestamp, mintingAllowedAfter)
         );
         new WildToken(mintingAllowedAfter);
+    }
+
+    function testCannotReceiveEth() public {
+        vm.expectRevert(bytes("Contract should not accept ETH"));
+        (bool success,) = address(token).call{value: 1 ether}("");
+        console.log("ETH transfer success status:", success);
+        assertFalse(success, "Contract should not be able to accept ETH");
+    }
+
+    function testAccess() public {
+        console.log("Testing access to token attributes and ownership");
+        assertEq(token.name(), "Wildcard", "Token name should be Wildcard");
+        assertEq(token.symbol(), "WILD", "Token symbol should be WILD");
+        assertEq(token.decimals(), 18, "Token decimals should be 18");
+        assertEq(token.totalSupply(), 1_000_000_000 * 10 ** token.decimals(), "Total supply should be 1 billion");
+        assertEq(token.owner(), owner, "Owner should be the initial owner");
     }
 }
