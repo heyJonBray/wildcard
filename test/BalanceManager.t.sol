@@ -135,29 +135,35 @@ contract BalanceManagerTest is Test {
         vm.stopPrank();
     }
 
-    function testClaimBalance() public {
-        vm.startPrank(admin1);
+function testClaimBalance() public {
+    vm.startPrank(admin1);
 
-        uint256 amount = 500 * 10 ** 18;
-        balanceManager.setBalance(user1, address(mockTokenA), amount);
+    uint256 amount = 500 * 10 ** 18;
+    balanceManager.setBalance(user1, address(mockTokenA), amount);
 
-        vm.stopPrank();
+    vm.stopPrank();
 
-        // Fund the contract with tokens
-        vm.startPrank(user1);
-        mockTokenA.approve(address(balanceManager), amount);
-        balanceManager.fund(address(mockTokenA), amount);
-        console.log("Funded contract with tokens:", amount);
-        vm.stopPrank();
+    // Fund the contract with tokens
+    vm.startPrank(user1);
+    mockTokenA.approve(address(balanceManager), amount);
+    balanceManager.fund(address(mockTokenA), amount);
+    console.log("Funded contract with tokens:", amount);
+    vm.stopPrank();
 
-        vm.startPrank(user1);
-        balanceManager.claim(address(mockTokenA));
-        assertEq(balanceManager.balances(user1, address(mockTokenA)), 0, "Balance should be claimed");
-        assertEq(mockTokenA.balanceOf(user1), 100500 * 10 ** 18, "User1 should receive the claimed tokens");
-        console.log("User1 claimed balance:", amount);
+    uint256 initialBalance = mockTokenA.balanceOf(user1);
+    console.log("Initial User1 Token A balance:", initialBalance);
 
-        vm.stopPrank();
-    }
+    vm.startPrank(user1);
+    balanceManager.claim(address(mockTokenA));
+    uint256 claimedBalance = mockTokenA.balanceOf(user1);
+    console.log("User1 claimed Token A balance:", claimedBalance - initialBalance);
+    
+    assertEq(balanceManager.balances(user1, address(mockTokenA)), 0, "Balance should be claimed");
+    assertEq(claimedBalance, initialBalance + amount, "User1 should receive the claimed tokens");
+    console.log("User1 final Token A balance:", claimedBalance);
+
+    vm.stopPrank();
+}
 
     function testClaimAllBalances() public {
         vm.startPrank(admin1);
