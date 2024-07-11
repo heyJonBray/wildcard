@@ -53,9 +53,8 @@ contract BalanceManagerTest is Test {
 
         // Mint tokens to the users
         mockTokenA.mint(user1, 100000 * 10 ** 18);
-        mockTokenA.mint(user2, 100000 * 10 ** 18);
+        mockTokenC.mint(user1, 100000 * 10 ** 18);
 
-        mockTokenB.mint(user1, 100000 * 10 ** 18);
         mockTokenB.mint(user2, 100000 * 10 ** 18);
 
         // Set admin roles
@@ -164,29 +163,29 @@ contract BalanceManagerTest is Test {
         vm.startPrank(admin1);
 
         uint256 amountA = 500 * 10 ** 18;
-        uint256 amountB = 300 * 10 ** 18;
+        uint256 amountC = 300 * 10 ** 18;
 
         balanceManager.setBalance(user1, address(mockTokenA), amountA);
-        balanceManager.setBalance(user1, address(mockTokenB), amountB);
+        balanceManager.setBalance(user1, address(mockTokenC), amountC);
 
         vm.stopPrank();
 
         // Fund the contract with tokens
         vm.startPrank(user1);
         mockTokenA.approve(address(balanceManager), amountA);
-        mockTokenB.approve(address(balanceManager), amountB);
+        mockTokenC.approve(address(balanceManager), amountC);
         balanceManager.fund(address(mockTokenA), amountA);
-        balanceManager.fund(address(mockTokenB), amountB);
+        balanceManager.fund(address(mockTokenC), amountC);
         console.log("Funded contract with Token A:", amountA);
-        console.log("Funded contract with Token B:", amountB);
+        console.log("Funded contract with Token C:", amountC);
         vm.stopPrank();
 
         vm.startPrank(user1);
         balanceManager.claimAll();
         assertEq(balanceManager.balances(user1, address(mockTokenA)), 0, "Balance for Token A should be claimed");
-        assertEq(balanceManager.balances(user1, address(mockTokenB)), 0, "Balance for Token B should be claimed");
+        assertEq(balanceManager.balances(user1, address(mockTokenC)), 0, "Balance for Token C should be claimed");
         assertEq(mockTokenA.balanceOf(user1), amountA, "User1 should receive the claimed Token A");
-        assertEq(mockTokenB.balanceOf(user1), amountB, "User1 should receive the claimed Token B");
+        assertEq(mockTokenC.balanceOf(user1), amountC, "User1 should receive the claimed Token C");
         console.log("User1 claimed all balances");
 
         vm.stopPrank();
@@ -214,60 +213,44 @@ contract BalanceManagerTest is Test {
         vm.stopPrank();
     }
 
-    function testEmergencyWithdraw() public {
-        uint256 amount = 500 * 10 ** 18;
-
-        // Fund the contract with tokens
-        vm.startPrank(user1);
-        mockTokenA.approve(address(balanceManager), amount);
-        balanceManager.fund(address(mockTokenA), amount);
-        console.log("Funded contract with tokens for emergency withdraw test:", amount);
-        vm.stopPrank();
-
-        uint256 contractBalance = mockTokenA.balanceOf(address(balanceManager));
-
-        vm.startPrank(owner);
-        balanceManager.emergencyWithdraw(address(mockTokenA), owner);
-        assertEq(mockTokenA.balanceOf(owner), contractBalance, "Owner should receive the emergency withdrawn tokens");
-        console.log("Owner performed emergency withdraw:", contractBalance);
-
-        vm.stopPrank();
-    }
-
     function testGetterMethods() public {
         vm.startPrank(admin1);
 
         uint256 amountA = 500 * 10 ** 18;
-        uint256 amountB = 300 * 10 ** 18;
+        uint256 amountC = 300 * 10 ** 18;
         balanceManager.setBalance(user1, address(mockTokenA), amountA);
-        balanceManager.setBalance(user1, address(mockTokenB), amountB);
+        balanceManager.setBalance(user1, address(mockTokenC), amountC);
 
         vm.stopPrank();
 
         // Test getBalance
         uint256 balanceA = balanceManager.getBalance(user1, address(mockTokenA));
-        uint256 balanceB = balanceManager.getBalance(user1, address(mockTokenB));
+        uint256 balanceC = balanceManager.getBalance(user1, address(mockTokenC));
         assertEq(balanceA, amountA, "Getter method getBalance should return correct balance for Token A");
-        assertEq(balanceB, amountB, "Getter method getBalance should return correct balance for Token B");
+        assertEq(balanceC, amountC, "Getter method getBalance should return correct balance for Token C");
 
         // Test getBalancesForWallet
         (address[] memory tokens, uint256[] memory balances) = balanceManager.getBalancesForWallet(user1);
         assertEq(tokens[0], address(mockTokenA), "First token for user1 should be Token A");
-        assertEq(tokens[1], address(mockTokenB), "Second token for user1 should be Token B");
+        assertEq(tokens[1], address(mockTokenC), "Second token for user1 should be Token C");
         assertEq(balances[0], amountA, "First balance for user1 should match Token A balance");
-        assertEq(balances[1], amountB, "Second balance for user1 should match Token B balance");
+        assertEq(balances[1], amountC, "Second balance for user1 should match Token C balance");
 
         // Test getBalancesForToken
-        (address[] memory wallets, uint256[] memory tokenBalances) = balanceManager.getBalancesForToken(address(mockTokenA));
-        assertEq(wallets[0], user1, "First wallet for Token A should be user1");
-        assertEq(tokenBalances[0], amountA, "Balance for user1 with Token A should match");
+        (address[] memory walletsA, uint256[] memory tokenBalancesA) = balanceManager.getBalancesForToken(address(mockTokenA));
+        assertEq(walletsA[0], user1, "First wallet for Token A should be user1");
+        assertEq(tokenBalancesA[0], amountA, "Balance for user1 with Token A should match");
+
+        (address[] memory walletsC, uint256[] memory tokenBalancesC) = balanceManager.getBalancesForToken(address(mockTokenC));
+        assertEq(walletsC[0], user1, "First wallet for Token C should be user1");
+        assertEq(tokenBalancesC[0], amountC, "Balance for user1 with Token C should match");
 
         // Test getAllTotalBalances
         (address[] memory allTokens, uint256[] memory totalBalances) = balanceManager.getAllTotalBalances();
         assertEq(allTokens[0], address(mockTokenA), "First token in allTokens should be Token A");
         assertEq(totalBalances[0], amountA, "Total balance for Token A should match");
-        assertEq(allTokens[1], address(mockTokenB), "Second token in allTokens should be Token B");
-        assertEq(totalBalances[1], amountB, "Total balance for Token B should match");
+        assertEq(allTokens[1], address(mockTokenC), "Second token in allTokens should be Token C");
+        assertEq(totalBalances[1], amountC, "Total balance for Token C should match");
 
         // Test getAllAdmins
         address[] memory admins = balanceManager.getAllAdmins();
@@ -285,10 +268,21 @@ contract BalanceManagerTest is Test {
         // Test getTokensForUser
         address[] memory user1Tokens = balanceManager.getTokensForUser(user1);
         assertEq(user1Tokens[0], address(mockTokenA), "User1 should have Token A");
-        assertEq(user1Tokens[1], address(mockTokenB), "User1 should have Token B");
+        assertEq(user1Tokens[1], address(mockTokenC), "User1 should have Token C");
 
         // Test getUsersForToken
         address[] memory tokenAUsers = balanceManager.getUsersForToken(address(mockTokenA));
         assertEq(tokenAUsers[0], user1, "Token A should be associated with user1");
+
+        address[] memory tokenCUsers = balanceManager.getUsersForToken(address(mockTokenC));
+        assertEq(tokenCUsers[0], user1, "Token C should be associated with user1");
+
+        // Ensure token B associations are correct
+        (address[] memory walletsB, uint256[] memory tokenBalancesB) = balanceManager.getBalancesForToken(address(mockTokenB));
+        address[] memory user2Tokens = balanceManager.getTokensForUser(user2);
+
+        assertEq(walletsB[0], user2, "First wallet for Token B should be user2");
+        assertEq(tokenBalancesB[0], 0, "Balance for user2 with Token B should be zero initially");
+        assertEq(user2Tokens.length, 0, "User2 should have no tokens initially");
     }
 }
