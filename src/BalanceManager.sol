@@ -157,7 +157,7 @@ contract BalanceManager is Ownable, ReentrancyGuard {
      * @param amount amount of token to withdraw
      * @param to address of recipient account
      */
-    function withdrawExcessTokens(address token, uint256 amount, address to) external onlyOwner {
+    function withdrawExcessTokens(address token, uint256 amount, address to) external onlyAdmin {
         require(token != address(0), "Invalid token address");
         require(to != address(0), "Invalid recipient address");
 
