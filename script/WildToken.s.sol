@@ -10,7 +10,9 @@ contract WildTokenScript is Script {
     function setUp() public {}
 
     function run() public {
-        vm.startBroadcast();
+        // load private key from environment variable
+        uint256 devPrivateKey = vm.envUint("DEV_PRIVATE_KEY");
+        vm.startBroadcast(devPrivateKey);
 
         uint256 mintingAllowedAfter = block.timestamp + 365 days; // Set the initial minting allowed time
 

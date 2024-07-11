@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import "../src/BalanceManager.sol";
@@ -7,7 +7,7 @@ import "../src/BalanceManager.sol";
 contract DeployBalanceManager is Script {
     function run() external {
         // load private key from environment variable
-        uint256 deployerPrivateKey = vm.envUint(process.env.PRIVATE_KEY);
+        uint256 deployerPrivateKey = vm.envUint("DEV_PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         // deploy contract
