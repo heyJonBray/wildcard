@@ -15,8 +15,10 @@ contract WildTokenTest is Test {
     }
 
     function testInitialSupply() public {
-        assertEq(token.totalSupply(), 1_000_000_000 * 10 ** token.decimals());
-        assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals());
+        uint256 initialSupply = 1_000_000_000 * 10 ** token.decimals();
+        emit log_named_uint("initial supply", initialSupply);
+        assertEq(token.totalSupply(), initialSupply);
+        assertEq(token.balanceOf(owner), initialSupply);
     }
 
     function testInflation() public {
@@ -49,7 +51,7 @@ contract WildTokenTest is Test {
         assertEq(token.totalSupply(), expectedSupply);
     }
 
-        function testMintToContractAddressBlocked() public {
+    function testMintToContractAddressBlocked() public {
         vm.warp(block.timestamp + 365 days);
         uint256 mintAmount = (token.totalSupply() * 1) / 100;
 
@@ -68,24 +70,27 @@ contract WildTokenTest is Test {
         token.transfer(address(token), mintAmount);
         // recover tokens from the contract address
         uint256 contractBalanceBefore = token.balanceOf(address(token));
-        emit log_named_uint("Contract balance before recovery", contractBalanceBefore);
+        emit log_named_uint("contract balance before recovery", contractBalanceBefore);
         token.recoverTokens(address(token), mintAmount, owner);
         uint256 contractBalanceAfter = token.balanceOf(address(token));
-        emit log_named_uint("Contract balance after recovery", contractBalanceAfter);
+        emit log_named_uint("contract balance after recovery", contractBalanceAfter);
         assertEq(contractBalanceAfter, contractBalanceBefore - mintAmount);
         assertEq(token.balanceOf(owner), 1_000_000_000 * 10 ** token.decimals() + mintAmount);
-        emit log_named_uint("Owner balance after recovery", token.balanceOf(owner));
+        emit log_named_uint("owner balance after recovery", token.balanceOf(owner));
     }
 
     function testTotalSupplyAfterInflation() public {
+        uint256 initialSupply = 1_000_000_000 * 10 ** token.decimals();
         for (uint256 year = 1; year <= 5; year++) {
+            // fast forward 1 year
             vm.warp(block.timestamp + 365 days);
 
-            uint256 mintAmount = (token.totalSupply() * 5) / 100;
+            // calculate 5% of the initial supply
+            uint256 mintAmount = (initialSupply * 5) / 100;
             token.mint(owner, mintAmount);
 
             emit log_named_uint(
-                string(abi.encodePacked("Year ", uint2str(year), " - Total Supply")),
+                string(abi.encodePacked("year ", uint2str(year), " - total supply")),
                 token.totalSupply()
             );
         }

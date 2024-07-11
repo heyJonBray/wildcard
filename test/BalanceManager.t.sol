@@ -91,6 +91,60 @@ contract BalanceManagerTest is Test {
         console.log("Removed new admin:", newAdmin);
     }
 
+  function testRemovedAdminWorks() public {
+    vm.startPrank(owner);
+
+    // Add user1 as admin
+    balanceManager.addAdmin(user1);
+    assertTrue(balanceManager.isAdmin(user1), "User1 should be added as an admin");
+    console.log("Owner added User1 as admin");
+
+    // User1 sets balance for User2
+    uint256 amount = 500 * 10 ** 18;
+    vm.stopPrank();
+    vm.startPrank(user1);
+    balanceManager.setBalance(user2, address(mockTokenA), amount);
+    console.log("User1 set balance for User2 to:", amount);
+    assertEq(balanceManager.getBalance(user2, address(mockTokenA)), amount, "User2 balance should be set");
+
+    // Remove user1 as admin
+    vm.stopPrank();
+    vm.startPrank(owner);
+    balanceManager.removeAdmin(user1);
+    assertFalse(balanceManager.isAdmin(user1), "User1 should be removed as admin");
+    console.log("Owner removed User1 as admin");
+
+    // User1 attempts to set balance for User2 again
+    vm.stopPrank();
+    vm.startPrank(user1);
+    vm.expectRevert("Caller is not an admin");
+    balanceManager.setBalance(user2, address(mockTokenA), amount);
+    console.log("User1 attempted to set balance for User2 and failed as expected after being removed as admin");
+
+    vm.stopPrank();
+ }
+
+function testUserCannotCallAdmin() public {
+    vm.startPrank(user1);
+
+    // Attempt to set balance as a regular user
+    vm.expectRevert("Caller is not an admin");
+    balanceManager.setBalance(user2, address(mockTokenA), fiveHundred);
+    console.log("User1 attempted to set balance for User2 and failed as expected");
+
+    // Attempt to add an admin as a regular user
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user1));
+    balanceManager.addAdmin(user1);
+    console.log("User1 attempted to add themselves as an admin and failed as expected");
+
+    // Attempt to remove an admin as a regular user
+    vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user1));
+    balanceManager.removeAdmin(admin1);
+    console.log("User1 attempted to remove Admin1 and failed as expected");
+
+    vm.stopPrank();
+}
+
     function testSetBalance() public {
         vm.startPrank(admin1);
 
@@ -382,6 +436,25 @@ contract BalanceManagerTest is Test {
     // Assertions
     assertEq(claimedBalance, userBalance, "User1 should receive the claimed balance");
     assertTrue(finalUser1Balance > initialUser1Balance, "User1 should have more tokens than initially");
+  }
+
+  // attempt to set balance for contract address
+  function testCannotAddContractBalance() public {
+    vm.startPrank(admin1);
+
+    address contractAddress = address(balanceManager);
+    vm.expectRevert("Contract cannot be the user");
+    balanceManager.setBalance(contractAddress, address(mockTokenA), fiveHundred);
+
+    vm.stopPrank();
+}
+
+  // assert contract cannot receive ETH
+  function testCannotReceiveEth() public {
+    vm.expectRevert(bytes("Contract should not accept ETH"));
+    (bool success,) = address(balanceManager).call{value: 1 ether}("");
+    console.log("ETH transfer success status:", success);
+    assertFalse(success, "Contract should not be able to accept ETH");
   }
 
 function testGetterMethods() public {
