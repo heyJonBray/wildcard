@@ -9,6 +9,8 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     mapping(address => bool) public admins;
     mapping(address => mapping(address => uint256)) public balances;
     mapping(address => uint256) public totalBalances;
+    mapping(address => address[]) public walletTokens;
+    mapping(address => address[]) public tokenWallets;
 
     // check if caller is admin
     modifier onlyAdmin() {
