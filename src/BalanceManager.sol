@@ -12,6 +12,7 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     mapping(address => address[]) public walletTokens;
     mapping(address => address[]) public tokenWallets;
     address[] public allTokens;
+    address[] public allAdmins;
 
     modifier onlyAdmin() {
         require(admins[msg.sender], "Caller is not an admin");
@@ -39,6 +40,7 @@ contract BalanceManager is Ownable, ReentrancyGuard {
 
     function addAdmin(address admin) external onlyOwner {
         admins[admin] = true;
+        allAdmins.push(admin);
         emit AdminAdded(admin);
     }
 
@@ -168,6 +170,18 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         emit TokensWithdrawn(token, amount, to);
     }
 
+    /**
+     * Getter Methods
+     */
+
+    function getAllAdmins() external view returns (address[] memory) {
+        return allAdmins;
+    }
+
+    function isAdmin(address account) external view returns (bool) {
+        return admins[account];
+    }
+
     // get balance for a specific (wallet, token)
     function getBalance(address wallet, address token) external view returns (uint256) {
         return balances[wallet][token];
@@ -207,5 +221,15 @@ contract BalanceManager is Ownable, ReentrancyGuard {
             balanceValues[i] = totalBalances[tokens[i]];
         }
         return (tokens, balanceValues);
+    }
+
+    // get all tokens associated with a user
+    function getTokensForUser(address user) external view returns (address[] memory) {
+        return walletTokens[user];
+    }
+
+    // get all users associated with a token
+    function getUsersForToken(address token) external view returns (address[] memory) {
+        return tokenWallets[token];
     }
 }
