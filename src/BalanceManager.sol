@@ -84,8 +84,8 @@ contract BalanceManager is Ownable, ReentrancyGuard {
         emit BalanceReduced(user, token, amount);
     }
 
-    // function to allow admin to fund contract
-    function fund(address token, uint256 amount) external onlyAdmin {
+    // function to allow any wallet to fund the contract
+    function fund(address token, uint256 amount) external {
         require(token != address(0), "Invalid token address");
         require(amount > 0, "Amount must be greater than zero");
         IERC20(token).transferFrom(msg.sender, address(this), amount);
