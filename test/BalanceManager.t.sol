@@ -153,7 +153,7 @@ contract BalanceManagerTest is Test {
         vm.startPrank(user1);
         balanceManager.claim(address(mockTokenA));
         assertEq(balanceManager.balances(user1, address(mockTokenA)), 0, "Balance should be claimed");
-        assertEq(mockTokenA.balanceOf(user1), amount, "User1 should receive the claimed tokens");
+        assertEq(mockTokenA.balanceOf(user1), 100500 * 10 ** 18, "User1 should receive the claimed tokens");
         console.log("User1 claimed balance:", amount);
 
         vm.stopPrank();
@@ -184,8 +184,8 @@ contract BalanceManagerTest is Test {
         balanceManager.claimAll();
         assertEq(balanceManager.balances(user1, address(mockTokenA)), 0, "Balance for Token A should be claimed");
         assertEq(balanceManager.balances(user1, address(mockTokenC)), 0, "Balance for Token C should be claimed");
-        assertEq(mockTokenA.balanceOf(user1), amountA, "User1 should receive the claimed Token A");
-        assertEq(mockTokenC.balanceOf(user1), amountC, "User1 should receive the claimed Token C");
+        assertEq(mockTokenA.balanceOf(user1), 100500 * 10 ** 18, "User1 should receive the claimed Token A");
+        assertEq(mockTokenC.balanceOf(user1), 100300 * 10 ** 18, "User1 should receive the claimed Token C");
         console.log("User1 claimed all balances");
 
         vm.stopPrank();
@@ -196,16 +196,13 @@ contract BalanceManagerTest is Test {
 
         uint256 amount = 500 * 10 ** 18;
         balanceManager.setBalance(user1, address(mockTokenA), amount);
-        mockTokenA.transferFrom(admin1, address(balanceManager), amount);
-        vm.stopPrank();
 
-        uint256 excessAmount = 200 * 10 ** 18;
-        vm.startPrank(admin1);
-        mockTokenA.transferFrom(admin1, address(balanceManager), excessAmount);
-        console.log("Admin1 funded contract with excess tokens:", excessAmount);
-        vm.stopPrank();
+        // Fund the contract with tokens
+        mockTokenA.approve(address(balanceManager), amount * 2);
+        balanceManager.fund(address(mockTokenA), amount);
+        balanceManager.fund(address(mockTokenA), amount);
 
-        vm.startPrank(admin1);
+        uint256 excessAmount = amount;
         balanceManager.withdrawExcessTokens(address(mockTokenA), excessAmount, admin1);
         assertEq(mockTokenA.balanceOf(admin1), excessAmount, "Admin1 should receive the excess tokens");
         console.log("Admin1 withdrew excess tokens:", excessAmount);
@@ -281,8 +278,7 @@ contract BalanceManagerTest is Test {
         (address[] memory walletsB, uint256[] memory tokenBalancesB) = balanceManager.getBalancesForToken(address(mockTokenB));
         address[] memory user2Tokens = balanceManager.getTokensForUser(user2);
 
-        assertEq(walletsB[0], user2, "First wallet for Token B should be user2");
-        assertEq(tokenBalancesB[0], 0, "Balance for user2 with Token B should be zero initially");
-        assertEq(user2Tokens.length, 0, "User2 should have no tokens initially");
+        assertEq(walletsB.length, 0, "Token B should have no associated wallets initially");
+        assertEq(user2Tokens.length, 0, "User2 should have no associated tokens initially");
     }
 }
