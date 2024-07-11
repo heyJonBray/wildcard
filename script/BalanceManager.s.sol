@@ -1,21 +1,27 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-import {Script, console} from "forge-std/Script.sol";
-import {AllowanceManager} from "../src/AllowanceManager.sol";
+import "forge-std/Script.sol";
+import "../src/BalanceManager.sol";
 
-contract AllowanceManagerScript is Script {
-    AllowanceManager public AllowanceManager;
+contract DeployBalanceManager is Script {
+    function run() external {
+        // Load private key from environment variable or define it here
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
-    function setUp() public {}
+        // Start broadcasting transactions
+        vm.startBroadcast(deployerPrivateKey);
 
-    function run() public {
-        vm.startBroadcast();
+        // Deploy the BalanceManager contract
+        BalanceManager balanceManager = new BalanceManager();
 
-        AllowanceManager = new AllowanceManager();
+        // Add initial admins if needed
+        // balanceManager.addAdmin(adminAddress);
 
-        console.log("AllowanceManager deployed to:", address(AllowanceManager));
-
+        // Stop broadcasting transactions
         vm.stopBroadcast();
+
+        // Optionally log the address of the deployed contract
+        console.log("BalanceManager deployed at:", address(balanceManager));
     }
 }
