@@ -32,6 +32,9 @@ contract BalanceManager is Ownable, ReentrancyGuard {
     event Funded(address indexed token, uint256 amount);
     event TokensWithdrawn(address indexed token, uint256 amount, address indexed to);
 
+    constructor(address initialOwner) Ownable(initialOwner) {}
+
+
     // function to allow owner to add admin role
     function addAdmin(address admin) external onlyOwner {
         admins[admin] = true;
